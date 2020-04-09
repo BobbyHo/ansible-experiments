@@ -1,0 +1,54 @@
+- hosts: master
+  become: yes
+  tasks:
+    - name: initialize the cluster
+      become: yes
+      #become_user: inca
+      shell: kubeadm init --pod-network-cidr=10.231.0.0/16 >> cluster_initialized.txt
+      args:
+        chdir: /home/inca
+        creates: cluster_initialized.txt
+    
+    - name: sleep for 60 seconds
+      wait_for:
+        timeout: 120
+        
+    - name: create .kube directory
+      become: yes
+      become_user: inca
+      file:
+        path: /home/inca/.kube
+        state: directory
+        mode: 0755
+
+    - name: Check admin.conf file exists.
+      become: yes
+      become_user: inca
+      stat:
+        path: /etc/kubernetes/admin.conf
+      register: k8s_conf
+
+    - name: copy admin.conf to user's kube config
+      become: yes
+      #become_user: inca
+      copy:
+        src: /etc/kubernetes/admin.conf
+        dest: /home/inca/.kube/config
+        remote_src: yes
+        owner: inca
+        group: inca
+      when: k8s_conf.stat.exists
+      environment: 
+        KUBECONFIG: /home/inca/.kube/config
+    
+    - name: sleep for 10 seconds
+      wait_for:
+        timeout: 10
+
+    - name: install Pod network
+      become: yes
+      become_user: inca
+      shell: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/2140ac876ef134e0ed5af15c65e414cf26827915/Documentation/kube-flannel.yml >> pod_network_setup.txt
+      args:
+        chdir: /home/inca
+        creates: pod_network_setup.txt

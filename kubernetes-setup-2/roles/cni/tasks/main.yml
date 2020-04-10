@@ -1,0 +1,25 @@
+---
+
+- name: "Check {{ network }} daemonset is working"
+  shell: kubectl --kubeconfig={{ kubeadmin_config }} get ds --all-namespaces | grep {{ network }}
+  delegate_to: "{{ groups['master'][0] }}"
+  run_once: true
+  register: check_net
+  ignore_errors: true
+  changed_when: false
+
+- name: apply calico network
+  when: network == "calico" and check_net is failed
+  command: kubectl apply -f https://docs.projectcalico.org/v3.11/manifests/calico.yaml/
+  delegate_to: "{{ groups['master'][0] }}"
+  run_once: true
+  environment:
+        KUBECONFIG: /home/inca/.kube/config
+
+- name: apply flannel network
+  when: network == "flannel" and check_net is failed
+  command: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/2140ac876ef134e0ed5af15c65e414cf26827915/Documentation/kube-flannel.yml
+  delegate_to: "{{ groups['master'][0] }}"
+  run_once: true
+  environment:
+        KUBECONFIG: /home/inca/.kube/config

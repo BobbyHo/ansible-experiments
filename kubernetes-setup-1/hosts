@@ -1,10 +1,13 @@
 [masters]
-master ansible_host=10.0.0.210 ansible_user=inca
+# use ssh key to access the remote server
+# enter the IP address of the remote host and the user name for ssh access
+master ansible_host= ansible_user=
 
 [workers]
-#worker1 ansible_host=worker_1_ip ansible_user=root
-#worker2 ansible_host=worker_2_ip ansible_user=root
+worker1 ansible_host=worker_1_ip ansible_user=
+worker2 ansible_host=worker_2_ip ansible_user=
 
 [all:vars]
 ansible_python_interpreter=/usr/bin/python3
-ansible_sudo_pass=incadev
+# enter the sudo password for the user
+ansible_sudo_pass=
